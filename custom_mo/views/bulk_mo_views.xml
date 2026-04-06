@@ -1,0 +1,95 @@
+<odoo>
+    <!-- Action + menu (sequence=5 keeps it on top of standard MO list) -->
+    <record id="action_mrp_bulk_order" model="ir.actions.act_window">
+        <field name="name">Bulk MO Orders</field>
+        <field name="res_model">mrp.bulk.order</field>
+        <field name="view_mode">list,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Create manufacturing orders for multiple sizes from a single grid.
+            </p>
+        </field>
+    </record>
+
+    <menuitem id="menu_mrp_bulk_order"
+              name="Bulk MO Orders"
+              parent="mrp.menu_mrp_manufacturing"
+              action="action_mrp_bulk_order"
+              sequence="5"/>
+
+    <record id="view_mrp_bulk_order_tree" model="ir.ui.view">
+        <field name="name">mrp.bulk.order.tree</field>
+        <field name="model">mrp.bulk.order</field>
+        <field name="arch" type="xml">
+            <list>
+                <field name="name"/>
+                <field name="product_tmpl_id"/>
+                <field name="scheduled_date"/>
+                <field name="state"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_mrp_bulk_order_form" model="ir.ui.view">
+        <field name="name">mrp.bulk.order.form</field>
+        <field name="model">mrp.bulk.order</field>
+        <field name="arch" type="xml">
+            <form string="Bulk Manufacturing Order">
+                <header>
+                    <button name="action_confirm" type="object" string="Confirm" class="btn-primary" invisible="state != 'draft'"/>
+                    <button name="action_cancel" type="object" string="Cancel" class="btn-secondary" invisible="state != 'draft'"/>
+                    <field name="state" widget="statusbar" statusbar_visible="draft,confirmed,partial,done,cancel"/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <h1>
+                            <field name="name" readonly="1" class="oe_inline"/>
+                        </h1>
+
+                    </div>
+                    <group>
+                        <group>
+                            <field name="product_tmpl_id" options="{'no_create_edit': True}" readonly="is_done or state == 'cancel'"/>
+                            <field name="scheduled_date" readonly="is_done or state == 'cancel'"/>
+                        </group>
+                        <group>
+                            <field name="create_uid" string="Created By" readonly="1"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Variant Lines">
+                            <field name="line_ids" readonly="is_done or state == 'cancel'">
+                                <list editable="bottom"
+                                      decoration-success="state == 'done'"
+                                      decoration-warning="state not in ('done','cancel') and production_id"
+                                      decoration-danger="state == 'cancel'">
+                                    <field name="variant_name" readonly="1"/>
+                                    <field name="bom_id" optional="show" readonly="parent.is_done or parent.state == 'cancel'"/>
+                                    <field name="product_qty" readonly="parent.is_done or parent.state == 'cancel'"/>
+                                    <field name="qty_producing" readonly="parent.is_done or parent.state == 'cancel'"/>
+                                    <field name="production_id" readonly="1"/>
+
+                                    <button name="action_cancel_line" type="object" string="Cancel"
+                                            class="btn-secondary oe_inline me-1"
+                                            invisible="not production_id or parent.state in ('done','cancel') or parent.is_done or state in ('done','cancel')"/>
+                                    <button name="action_produce_now" type="object" string="Produce" class="btn-primary oe_inline" context="{'active_id': parent.id}"
+                                            invisible="not production_id or parent.state in ('done','cancel') or parent.is_done or state in ('done','cancel')"/>
+                                    <field name="state" readonly="1" widget="badge"
+                                           decoration-info="state == 'draft'"
+                                           decoration-success="state == 'done'"
+                                           decoration-warning="state not in ('done','cancel') and production_id"
+                                           decoration-danger="state == 'cancel'"/>
+                                    <field name="product_id" column_invisible="1"/>
+                                </list>
+                            </field>
+                        </page>
+                    </notebook>
+                </sheet>
+                <footer>
+                    <button name="action_produce_all" type="object" string="Mark All Done" invisible="state in ('done','cancel') or is_done"/>
+                    <button string="Close" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+</odoo>
